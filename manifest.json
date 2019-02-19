@@ -1,0 +1,24 @@
+{
+  "manifest_version": 2,
+  "name": "Timetracker",
+  "version": "1.0.0",
+  "description" : "Description",
+  "permissions": [
+    "tabs",
+    "activeTab",
+    "storage",
+    "cookies"
+  ],
+    "icons": { },
+  "background": {
+    "scripts": ["jquery-3.2.1.min.js","./build/background.js"]
+  },
+  "browser_action": {
+    "default_title": "Timetracker",
+    "default_popup": "popup.html"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  }   
+}
