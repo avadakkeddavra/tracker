@@ -1,30 +1,88 @@
 $(document).ready(() => {
+
     M.AutoInit();
     const Task = require('./services/Task');
+    const moment = require('moment');
+
     const TaskService = new Task();
-    const Tracker = require('./services/Tracker');
-    const TrackerService = new Tracker();
-    let CurrentTask = null;
-    const state = {
+    let CurrentTask = JSON.parse(localStorage.getItem('currentTask'));
+    const state = localStorage.getItem('state') ? JSON.parse(localStorage.getItem('state')) : {
         started: false,
-        rebuild: () => {
-            if(state.started) {
-                $('#tasks').attr('disabled','disabled');
-                $('#tasks').formSelect()
-            } else {
-                $('#tasks').removeAttr('disabled');
-                $('#tasks').formSelect()
-            }
+        interval: {}
+    }
+    $('.datepicker').datepicker({
+        format: 'yyyy-mm-dd',
+        defaultDate: localStorage.getItem('sortDate') ? localStorage.getItem('sortDate') : Date.now(),
+        setDefaultDate: true
+    });
+    $('.datepicker').on('change', function() {
+        localStorage.setItem('sortDate', $('.datepicker').val());
+        renderTasks();
+    })
+    const rebuild = () =>{
+        if(state.started) {
+            $('#tasks').attr('disabled','disabled');
+            $('#tasks').formSelect()
+        } else {
+            $('#tasks').removeAttr('disabled');
+            $('#tasks').formSelect()
         }
     }
+    const normalizeTime = (rawTime) => {
+        return {
+            seconds: rawTime%60,
+            minutes: Math.floor(rawTime/60),
+            hours: Math.floor(rawTime/(60*60))
+        }
+    }
+    const startLocalTimer = () => {
+        if(CurrentTask && state.started===true && localStorage.getItem('tracked')) {
+            let rawTime = Number(localStorage.getItem('tracked'));
+            state.interval = setInterval(() => {
+                rawTime++;
+                renderTimer(normalizeTime(rawTime));
+            }, 1000);
+            localStorage.setItem('state', JSON.stringify(state));
+        }
+    }
+    const renderTimer = (time) => {
+        const hours = time.hours < 10 ? '0'+time.hours : time.hours;
+        const minutes = time.minutes < 10 ? '0'+time.minutes : time.minutes;
+        const seconds = time.seconds < 10 ? '0'+time.seconds : time.seconds;
 
-    const render = () => {
-        let options = '';
+        const timeString = hours+':'+minutes+':'+seconds;
+        $('.timer').html(timeString);
+    }
+    const renderTasks = () => {
+        let options = '<option value="" disabled selected>Choose your option</option>';
         TaskService.all().forEach((item, index) => {
-            options += `<option value=${index}>${item.name} (${item.time})</option>`;
+            const time = normalizeTime(item.time);
+            const hours = time.hours < 10 ? '0'+time.hours : time.hours;
+            const minutes = time.minutes < 10 ? '0'+time.minutes : time.minutes;
+            const seconds = time.seconds < 10 ? '0'+time.seconds : time.seconds;
+    
+            const timeString = hours+':'+minutes+':'+seconds;
+            options += `<option value="${index}" ${CurrentTask && CurrentTask.index === index ? 'selected': '' }>${item.name} (${timeString})</option>`;
         });
+
         $('#tasks').html(options);
         $('#tasks').formSelect();
+    }
+    const render = () => {
+        renderTasks();
+        if(state.started === false && CurrentTask) {
+            $('#start').removeAttr('disabled');
+        } else if(state.started === true) {
+            $('#start').attr('disabled', 'disabled');
+            $('#pause').removeAttr('disabled');
+        }
+        if(CurrentTask) {
+            renderTimer(normalizeTime(CurrentTask.time));
+        }
+        localStorage.setItem('state', JSON.stringify(state));
+         if(localStorage.getItem('sortDate')) {
+             $('.datepicker').val(localStorage.getItem('sortDate'));
+         }
     }
 
     render();
@@ -38,17 +96,29 @@ $(document).ready(() => {
         if(name.length > 0) {
             TaskService.create({
                 name: name,
-                time: 0
+                time: 0,
+                date: moment().format("YYYY-MM-DD HH:mm:ss")
             });
+            CurrentTask = {
+                name: name,
+                time: 0,
+                index: 0
+            };
+            localStorage.setItem('currentTask', JSON.stringify(CurrentTask));
+            $('#name').val(null);
+            render();
         }
-        render();
+        
     });
 
     $('#tasks').on('change', () => {
-
         TaskService.get(Number($('#tasks').val())).then((task) => {
             CurrentTask = task;
+            localStorage.setItem('tracked', CurrentTask.time);
+            renderTimer(normalizeTime(CurrentTask.time));
+            $('#start').removeAttr('disabled'); 
             CurrentTask.index = Number($('#tasks').val());
+            localStorage.setItem('currentTask', JSON.stringify(CurrentTask));
             console.log(CurrentTask);
         }).catch((err) => {
             console.log(err);
@@ -57,20 +127,33 @@ $(document).ready(() => {
 
     $('#start').click(() => {
         if(CurrentTask){
-            chrome.runtime.sendMessage({task: CurrentTask, action: 'start'}, function(response) {
+            chrome.runtime.sendMessage({time: CurrentTask.time, action: 'start'}, function(response) {
                 state.started = true;
-                state.rebuild();
+                rebuild();
+                localStorage.setItem('state', JSON.stringify(state));
+                console.log(response)   
+                $('#start').attr('disabled', 'disabled');
+                $('#pause').removeAttr('disabled');
+                startLocalTimer()
             });
         }
     })
     $('#pause').click(() => {
         if(CurrentTask){
             chrome.runtime.sendMessage({action: 'pause'}, function(response) {
-               CurrentTask.time = response.time;
-               console.log(TaskService.trackTime(CurrentTask.index, response.time));
-               render();
-               state.started = false;
-               state.rebuild();
+                console.log(response);
+                if(response && response.time) {
+                    CurrentTask.time = response.time;
+                    localStorage.setItem('currentTask', JSON.stringify(CurrentTask));
+                    console.log(TaskService.trackTime(CurrentTask.index, response.time));
+                }
+                render();
+                state.started = false;
+                $('#start').removeAttr('disabled');
+                $('#pause').attr('disabled', 'disabled');
+                rebuild();
+                clearInterval(state.interval);
+                localStorage.setItem('state', JSON.stringify(state));
             });
         }
     })

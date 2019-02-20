@@ -4,14 +4,15 @@ let interval = {};
 chrome.runtime.onMessage.addListener(   
   function(request, sender, sendResponse) {
     let options = request;
-    let task = request.task ? request.task : {};
+    let time = request.time ? request.time : 0
     if(options.action === 'start') {
-      const TrackerService = new Tracker(task);
-      invterval = TrackerService.start();
-      sendResponse({success: true, message: 'Started'});
+      const TrackerService = new Tracker(time);
+      interval = TrackerService.start();
+      console.log(interval);
+      sendResponse({success: true, message: 'Started', time: interval.time});
     } else {
-      const res = invterval.pause();
-      sendResponse({success: true, time: res.time});
+      const res = interval.pause();
+      sendResponse({success: true, time: res});
     }
  
 });

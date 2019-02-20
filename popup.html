@@ -8,24 +8,30 @@
     <link rel="stylesheet" href="css/style.css">    
 </head>
 <body>
+    <span id="date"><i class="fa fa-calendar"></i><input type="text" class="datepicker"></span>
+    <h4>Start tracking</h4>
+        <div class="input-field col s12">
+            <select id="tasks">
+                <option value="" disabled selected>Choose your option</option>
+            </select>
+            <label>Choose your task</label>
+        </div>
+        <div class="timer">
+            00:00
+        </div>
+        <button type="button" id="start" disabled class="btn green white-text">Start</button>
+        <button type="button" id="pause" disabled class="btn orange white-text">Pause</button>
     <form>
+        <h5>Create task</h5>
         <div class="input-field">
             <input type="text" id="name">
             <label for="">Task name</label>
         </div>
         <button type="button" id="create" class="btn blue white-text">Create</button>
     </form>
-    <i class="fa fa-bars" id="options"></i>
+    <!-- <i class="fa fa-bars" id="options"></i> -->
     
-    <h4>Start tracking</h4>
-    <div class="input-field col s12">
-            <select id="tasks">
-                <option value="" disabled selected>Choose your option</option>
-            </select>
-            <label>Choose your task</label>
-    </div>
-    <button type="button" id="start" class="btn green white-text">Start</button>
-    <button type="button" id="pause" class="btn orange white-text">Pause</button>
+    
     <script src="jquery-3.2.1.min.js"></script>
     <script src="./build/common.js"></script>
     <script src="lib/materialize.min.js"></script>

@@ -5,27 +5,22 @@ let interval = {};
 chrome.runtime.onMessage.addListener(   
   function(request, sender, sendResponse) {
     let options = request;
-    let task = request.task ? request.task : {};
+    let time = request.time ? request.time : 0
     if(options.action === 'start') {
-      const TrackerService = new Tracker(task);
-      invterval = TrackerService.start();
-      sendResponse({success: true, message: 'Started'});
+      const TrackerService = new Tracker(time);
+      interval = TrackerService.start();
+      console.log(interval);
+      sendResponse({success: true, message: 'Started', time: interval.time});
     } else {
-      const res = invterval.pause();
-      sendResponse({success: true, time: res.time});
+      const res = interval.pause();
+      sendResponse({success: true, time: res});
     }
  
 });
 },{"./services/Tracker":2}],2:[function(require,module,exports){
 class Tracker{
-    constructor(task) {
-        this.task = task;
-        if(localStorage.getItem('tracked')) {
-            this.time = Number(localStorage.getItem('tracked'));
-        } else {
-            this.time = 0;
-            localStorage.setItem('tracked', 0);
-        }
+    constructor(time) {
+        this.time = time;
         this.interval;
     }
     start() {
@@ -44,8 +39,12 @@ class Tracker{
         return this.getTaskTrackingTime();
     }
     getTaskTrackingTime() {
-        this.task.time = this.time;
-        return this.task;
+        return this.time;
+    }
+    stop() {
+        clearInterval(this.interval);
+        localStorage.setItem('tracked', 0);
+        return this.time;
     }
 }
 
