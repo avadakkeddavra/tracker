@@ -19,7 +19,7 @@ class Task{
         })
     }
     all() {
-        let tasks = this.tasks.sort((a,b) => {
+        return this.tasks.sort((a,b) => {
             if(a.date < b.date) {
                 return 1
             } else if(a.date > b.date) {
@@ -28,14 +28,14 @@ class Task{
                 return 0;
             }
         });
-        if(localStorage.getItem('sortDate')) {
-            tasks = tasks.filter((item) => {
-                if(item.date.indexOf(localStorage.getItem('sortDate')) != -1){
-                    return item;
-                }
-            })
-        }
-        return tasks;
+        // if(localStorage.getItem('sortDate')) {
+        //     tasks = tasks.filter((item) => {
+        //         if(item.date.indexOf(localStorage.getItem('sortDate')) != -1){
+        //             return item;
+        //         }
+        //     })
+        // }
+        
     }
 
     find(name) {

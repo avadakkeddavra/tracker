@@ -17,7 +17,7 @@ $(document).ready(() => {
     });
     $('.datepicker').on('change', function() {
         localStorage.setItem('sortDate', $('.datepicker').val());
-        renderTasks();
+        // renderTasks();
     })
     const rebuild = () =>{
         if(state.started) {
@@ -106,7 +106,7 @@ $(document).ready(() => {
             };
             localStorage.setItem('currentTask', JSON.stringify(CurrentTask));
             $('#name').val(null);
-            render();
+            renderTasks();
         }
         
     });

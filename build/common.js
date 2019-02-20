@@ -18,7 +18,7 @@ $(document).ready(() => {
     });
     $('.datepicker').on('change', function() {
         localStorage.setItem('sortDate', $('.datepicker').val());
-        renderTasks();
+        // renderTasks();
     })
     const rebuild = () =>{
         if(state.started) {
@@ -107,7 +107,7 @@ $(document).ready(() => {
             };
             localStorage.setItem('currentTask', JSON.stringify(CurrentTask));
             $('#name').val(null);
-            render();
+            renderTasks();
         }
         
     });
@@ -182,7 +182,7 @@ class Task{
         })
     }
     all() {
-        let tasks = this.tasks.sort((a,b) => {
+        return this.tasks.sort((a,b) => {
             if(a.date < b.date) {
                 return 1
             } else if(a.date > b.date) {
@@ -191,14 +191,14 @@ class Task{
                 return 0;
             }
         });
-        if(localStorage.getItem('sortDate')) {
-            tasks = tasks.filter((item) => {
-                if(item.date.indexOf(localStorage.getItem('sortDate')) != -1){
-                    return item;
-                }
-            })
-        }
-        return tasks;
+        // if(localStorage.getItem('sortDate')) {
+        //     tasks = tasks.filter((item) => {
+        //         if(item.date.indexOf(localStorage.getItem('sortDate')) != -1){
+        //             return item;
+        //         }
+        //     })
+        // }
+        
     }
 
     find(name) {
