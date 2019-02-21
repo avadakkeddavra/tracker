@@ -5,11 +5,10 @@ class Tracker{
         this.interval;
     }
     start() {
+        localStorage.setItem('tracked', this.time);
         this.interval = setInterval(() => {
             this.time++;
-            if(this.time%5 === 0) {
-                localStorage.setItem('tracked', this.time);
-            }
+            localStorage.setItem('tracked', this.time);
         }, 1000);
         return this;
     }

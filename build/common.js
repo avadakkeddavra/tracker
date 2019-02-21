@@ -8,9 +8,10 @@ $(document).ready(() => {
     const TaskService = new Task();
     let CurrentTask = JSON.parse(localStorage.getItem('currentTask'));
     const state = localStorage.getItem('state') ? JSON.parse(localStorage.getItem('state')) : {
-        started: false,
-        interval: {}
+        started: false
     }
+    let interval;
+
     $('.datepicker').datepicker({
         format: 'yyyy-mm-dd',
         defaultDate: localStorage.getItem('sortDate') ? localStorage.getItem('sortDate') : Date.now(),
@@ -37,16 +38,20 @@ $(document).ready(() => {
         }
     }
     const startLocalTimer = () => {
-        if(CurrentTask && state.started===true && localStorage.getItem('tracked')) {
+        console.log(CurrentTask);
+        console.log(state.started);
+        console.log(localStorage.getItem('tracked'));
+        if(CurrentTask && state.started === true && localStorage.getItem('tracked')) {
             let rawTime = Number(localStorage.getItem('tracked'));
-            state.interval = setInterval(() => {
+            interval = setInterval(() => {
                 rawTime++;
                 renderTimer(normalizeTime(rawTime));
             }, 1000);
-            localStorage.setItem('state', JSON.stringify(state));
+            localStorage.setItem('interval', interval);
         }
     }
     const renderTimer = (time) => {
+        console.log(time)
         const hours = time.hours < 10 ? '0'+time.hours : time.hours;
         const minutes = time.minutes < 10 ? '0'+time.minutes : time.minutes;
         const seconds = time.seconds < 10 ? '0'+time.seconds : time.seconds;
@@ -77,8 +82,11 @@ $(document).ready(() => {
             $('#start').attr('disabled', 'disabled');
             $('#pause').removeAttr('disabled');
         }
+        renderTimer(normalizeTime(localStorage.getItem('tracked')));
         if(CurrentTask) {
-            renderTimer(normalizeTime(CurrentTask.time));
+            if(state.started === true) {
+                startLocalTimer();
+            }
         }
         localStorage.setItem('state', JSON.stringify(state));
          if(localStorage.getItem('sortDate')) {
@@ -108,11 +116,13 @@ $(document).ready(() => {
             localStorage.setItem('currentTask', JSON.stringify(CurrentTask));
             $('#name').val(null);
             renderTasks();
+            $('#start').removeAttr('disabled'); 
         }
         
     });
 
     $('#tasks').on('change', () => {
+        console.log('hello')
         TaskService.get(Number($('#tasks').val())).then((task) => {
             CurrentTask = task;
             localStorage.setItem('tracked', CurrentTask.time);
@@ -129,6 +139,7 @@ $(document).ready(() => {
     $('#start').click(() => {
         if(CurrentTask){
             chrome.runtime.sendMessage({time: CurrentTask.time, action: 'start'}, function(response) {
+                localStorage.setItem('tracked', CurrentTask.time);
                 state.started = true;
                 rebuild();
                 localStorage.setItem('state', JSON.stringify(state));
@@ -141,20 +152,21 @@ $(document).ready(() => {
     })
     $('#pause').click(() => {
         if(CurrentTask){
-            chrome.runtime.sendMessage({action: 'pause'}, function(response) {
+            chrome.runtime.sendMessage({action: 'pause'}, (response) => {
                 console.log(response);
                 if(response && response.time) {
                     CurrentTask.time = response.time;
                     localStorage.setItem('currentTask', JSON.stringify(CurrentTask));
                     console.log(TaskService.trackTime(CurrentTask.index, response.time));
                 }
-                render();
                 state.started = false;
+                clearInterval(interval);
                 $('#start').removeAttr('disabled');
                 $('#pause').attr('disabled', 'disabled');
                 rebuild();
-                clearInterval(state.interval);
                 localStorage.setItem('state', JSON.stringify(state));
+                localStorage.setItem('interval', interval);
+                renderTasks();
             });
         }
     })
